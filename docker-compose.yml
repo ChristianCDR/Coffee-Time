@@ -15,6 +15,40 @@ services:
       - ./rabbitmq/data:/var/lib/rabbitmq/mnesia
       - ./rabbitmq/logs:/var/log/rabbitmq
       - ./rabbitmq/config:/etc/rabbitmq
+    networks:
+      - coffee-network
+  
+  ###> PHP ###
+  php:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: coffee-php
+    restart: always
+    volumes:
+      - ./back:/var/www/html
+    depends_on:
+      - rabbitmq
+    environment:
+      - MESSENGER_TRANSPORT_DSN=amqp://coffreo:J!Sms<5T@rabbitmq:5672/%2f/messages
+    networks:
+      - coffee-network
 
+  ###> Server Nginx ###
+  nginx:
+    image: nginx:latest
+    container_name: coffee-nginx
+    restart: always
+    ports:
+      - "8001:80"
+    depends_on:
+      - php
+    networks:
+      - coffee-network
+    
 volumes:
   rabbitmq:
+
+networks:
+  coffee-network:
+    driver: bridge
