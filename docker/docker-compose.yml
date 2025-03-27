@@ -21,16 +21,16 @@ services:
   ###> PHP ###
   php:
     build:
-      context: ./back
+      context: ../back
       dockerfile: Dockerfile
     container_name: coffee-php
     restart: always
     volumes:
-      - ./back:/var/www/html
+      - ../back:/var/www/html
     depends_on:
       - rabbitmq
     environment:
-      - MESSENGER_TRANSPORT_DSN=amqp://coffreo:J!Sms<5T@rabbitmq:5672/%2f/messages
+      - MESSENGER_TRANSPORT_DSN=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/%2f/messages
     networks:
       - coffee-network
 
@@ -41,11 +41,28 @@ services:
     restart: always
     ports:
       - "8001:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - php
     networks:
       - coffee-network
-    
+  
+  message-consumer:
+    build:
+      context: ../back
+      dockerfile: Dockerfile
+    container_name: coffee-message-consumer
+    restart: always
+    depends_on:
+      - rabbitmq
+      - php
+    environment:
+      - MESSENGER_TRANSPORT_DSN=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/%2f/messages
+    command: php bin/console messenger:consume async -vv
+    networks:
+      - coffee-network
+
 volumes:
   rabbitmq:
 
