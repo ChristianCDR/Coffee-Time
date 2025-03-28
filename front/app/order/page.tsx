@@ -5,9 +5,10 @@ import Navbar from "@/components/navbar";
 import Image from "next/image";
 
 export default function Order () {
-    const [name, setName] = useState("");
-    const [size, setSize] = useState("");
-    const [intensity, setIntensity] = useState("");
+    const [name, setName] = useState<string>("");
+    const [size, setSize] = useState<string>("");
+    const [intensity, setIntensity] = useState<string>("");
+    const [error, setError] = useState<string>("");
 
     const coffeeImages = new Map();
     coffeeImages.set("espresso", "/coffees/espresso.jpg");
@@ -37,6 +38,43 @@ export default function Order () {
     const coffeeSizesArray = Array.from(coffeeSizes);
     const coffeeIntensitiesArray = Array.from(coffeeIntensities);
 
+    const baseUrl = "http://localhost:8001";
+
+    const orderCoffee = async (name: string, size: string, intensity: string) => {
+        
+        if (!size || !intensity) {
+            setName(name);
+            setError("Veuillez choisir une taille et une intensité.");
+            return;
+        }
+
+        const order = { 
+            name: name,
+            size: size,
+            intensity: intensity
+        };
+
+        try {
+            const response = await fetch(baseUrl + "/api/order", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(order)
+            });
+
+            if (response.ok) {
+                console.log(response.json());
+            }
+            else {
+                console.error("Erreur lors de la commande. Veuillez réessayer...");
+            }
+        }
+        catch (error) {
+            console.error(error);
+        }
+    };
+
     return (
         <div>
             <Navbar />
@@ -45,7 +83,7 @@ export default function Order () {
                 <h2 className="text-xl text-center py-3">Choisissez votre type, votre taille et votre intensité</h2>
                 <div className="flex flex-wrap justify-around max-w-5/6 mx-auto">
                     { coffeeImagesArray.map(([key, value]) => (
-                        <div className="flex flex-col justify-around rounded-xl p-2 m-2 h-150"
+                        <div className="flex flex-col justify-around rounded-xl p-2 m-2 h-160 relative"
                             key={key}
                         >
                             <Image
@@ -92,7 +130,17 @@ export default function Order () {
                                     </div>
                                 </div>
                             </div>
-                            <button className="font-bold text-lg border-1 rounded-xl w-1/2 h-10 mx-auto">Commander</button>
+                            <button className="font-bold text-lg border-2 rounded-xl w-1/2 h-10 mx-auto"
+                                style = {{ backgroundColor: name && name === key && size && intensity ? "var(--custom-green)" : "" }}
+                                onClick={() => { orderCoffee(key, size, intensity) }}
+                            >
+                                Commander
+                            </button>
+                            {
+                                error && name === key ? 
+                                <p className={`text-red-500 text-sm text-center w-full font-bold absolute bottom-20 right-1/2 transform translate-x-1/2 tanslate-y-1/2`}> {error} </p> 
+                                : ""
+                            }
                         </div>
                     ))}
                 </div>
