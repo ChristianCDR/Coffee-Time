@@ -4,7 +4,7 @@ import { useState } from "react";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
 
-export default function order () {
+export default function Order () {
     const [name, setName] = useState("");
     const [size, setSize] = useState("");
     const [intensity, setIntensity] = useState("");
