@@ -4,6 +4,8 @@
   --background: #ffffff;
   --foreground: #171717;
   --dark-coffee: #3E2723;
+  --light-coffee: #E8E3CE;
+  --medium-coffee: #D0AE91;
 }
 
 @theme inline {
