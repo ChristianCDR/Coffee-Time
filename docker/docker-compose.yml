@@ -63,6 +63,19 @@ services:
     networks:
       - coffee-network
 
+  front: 
+    build: 
+      context: ../front
+      dockerfile: Dockerfile
+    container_name: coffee-front
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../front:/app
+    networks:
+      - coffee-network
+    
 volumes:
   rabbitmq:
 
