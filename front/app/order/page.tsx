@@ -15,7 +15,7 @@ export default function Order () {
     coffeeImages.set("cappuccino", "/coffees/cappuccino.webp");
     coffeeImages.set("mocha", "/coffees/mocha.webp");
     coffeeImages.set("espressino", "/coffees/espressino.jpg");
-    coffeeImages.set("cafeViennois", "/coffees/ee.jpg");
+    coffeeImages.set("cafeViennois", "/coffees/cafeViennois.jpg");
     coffeeImages.set("cafeLait", "/coffees/cafeLait.jpg");
     coffeeImages.set("macchiato", "/coffees/macchiato.webp");
 
