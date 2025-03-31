@@ -3,12 +3,19 @@
 import { useState } from "react";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
+import { useRouter } from 'next/navigation';
 
 export default function Order () {
+    // States
     const [name, setName] = useState<string>("");
     const [size, setSize] = useState<string>("");
-    const [intensity, setIntensity] = useState<string>("");
     const [error, setError] = useState<string>("");
+    const [intensity, setIntensity] = useState<string>("");
+
+    // Router
+    const router = useRouter();
+
+    const baseUrl = "http://localhost:8001";
 
     const coffeeImages = new Map();
     coffeeImages.set("espresso", "/coffees/espresso.jpg");
@@ -38,8 +45,6 @@ export default function Order () {
     const coffeeSizesArray = Array.from(coffeeSizes);
     const coffeeIntensitiesArray = Array.from(coffeeIntensities);
 
-    const baseUrl = "http://localhost:8001";
-
     const orderCoffee = async (name: string, size: string, intensity: string) => {
         
         if (!size || !intensity) {
@@ -64,7 +69,8 @@ export default function Order () {
             });
 
             if (response.ok) {
-                console.log(response.json());
+                const data = await response.json();
+                router.push(`/dashboard?${data.orderId}`);
             }
             else {
                 console.error("Erreur lors de la commande. Veuillez réessayer...");
@@ -102,7 +108,7 @@ export default function Order () {
                                     <span className="font-bold text-lg">Intensité</span>
                                     <div className="flex flex-row justify-between items-end">
                                         { coffeeIntensitiesArray.map(([intensityKey, intensityValue]) => (
-                                            <button className="rounded-xl w-7 h-7 p-1 rounded-full hover:border-3 hover:border-white"
+                                            <button className="rounded-xl w-7 h-7 p-1 rounded-full"
                                                 key={intensityKey}
                                                 style={{
                                                     backgroundColor: intensityValue,

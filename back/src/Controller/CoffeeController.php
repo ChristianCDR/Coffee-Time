@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Message\CoffeeMessage;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -12,6 +13,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 #[Route('/api')]
 final class CoffeeController extends AbstractController
 {
+
     #[Route('/order', name: 'app_order', methods: ['POST'])]
     public function prepareCoffee(MessageBusInterface $messageBus, Request $request): JsonResponse
     {
@@ -23,7 +25,8 @@ final class CoffeeController extends AbstractController
 
         return new JsonResponse([
             'status' => 'Commande reçue !',
-            'orderId' => 'Votre numéro de commande est '.$orderId
+            'orderId' => $orderId
         ]);
     }
+
 }

@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y \
     # Nettoie les fichiers inutiles après installation
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y docker.io
+
 # Installer Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 

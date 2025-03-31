@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   rabbitmq: 
     image: rabbitmq:4.0-management
-    container_name: rabbitmq
+    container_name: coffee-rabbitmq
     restart: always
     ports:
       - "5672:5672"
@@ -18,6 +16,23 @@ services:
     networks:
       - coffee-network
   
+  mercure-server:
+    image: dunglas/mercure
+    container_name: coffee-mercure
+    restart: always
+    ports:
+      - "8081:80"
+    depends_on:
+      - rabbitmq
+    environment:
+      - MERCURE_URL=${MERCURE_URL}
+      - MERCURE_PUBLIC_URL=${MERCURE_PUBLIC_URL}
+      - MERCURE_ALLOW_ORIGIN=*
+    volumes:
+      - ../back/Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - coffee-network
+
   ###> PHP ###
   php:
     build:
@@ -27,10 +42,14 @@ services:
     restart: always
     volumes:
       - ../back:/var/www/html
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - rabbitmq
+      - mercure-server
     environment:
       - MESSENGER_TRANSPORT_DSN=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/%2f/messages
+      - MERCURE_URL=${MERCURE_URL}
+      - MERCURE_PUBLIC_URL=${MERCURE_PUBLIC_URL}
     networks:
       - coffee-network
 
@@ -63,14 +82,16 @@ services:
     networks:
       - coffee-network
 
-  front: 
-    build: 
+  front:
+    build:
       context: ../front
       dockerfile: Dockerfile
     container_name: coffee-front
     restart: always
     ports:
       - "3000:3000"
+    environment:
+      - MERCURE_PUBLIC_URL=${MERCURE_PUBLIC_URL}
     volumes:
       - ../front:/app
     networks:
