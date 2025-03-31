@@ -24,7 +24,7 @@ class CoffeeMessageHandler
     {
         
         // Simuler un travail long
-        for ($i = 0; $i <= 5; $i++) {
+        for ($i = 0; $i <= 60; $i++) {
             sleep(1);
             
             // Mettre à jour la progression
