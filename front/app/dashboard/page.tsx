@@ -1,20 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Navbar from "@/components/navbar";
 import CoffeeProgress from "@/components/coffeeProgress";
+import Queues from "@/components/queues";
 
 export default function Dashboard() {    
     const [message, setMessage] = useState("");
-
-    // useEffect(() => {
-    //     const printData = () => {
-    //         const urlParams = new URLSearchParams(window.location.search);
-    //         const param = urlParams.get('param');
-    //         console.log(param);
-    //     }
-    //     printData();
-    // });
 
     const manageProcess = async (action: string) => {
         const response = await fetch(`http://localhost:8001/${action}-process`, {
@@ -46,6 +38,8 @@ export default function Dashboard() {
                 <button className="border-2 rounded-xl p-2 bg-blue-300 font-bold" onClick={() => manageProcess('restart')}>Démarrer le processus</button>
             </div>
             {message && <p className="text-center font-bold">{message}</p>}
+
+            <Queues />
         </div>
     );
 }

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
-import { useRouter } from 'next/navigation';
 
 export default function Order () {
     // States
@@ -11,9 +10,6 @@ export default function Order () {
     const [size, setSize] = useState<string>("");
     const [error, setError] = useState<string>("");
     const [intensity, setIntensity] = useState<string>("");
-
-    // Router
-    const router = useRouter();
 
     const baseUrl = "http://localhost:8001";
 
@@ -68,13 +64,10 @@ export default function Order () {
                 body: JSON.stringify(order)
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                router.push(`/dashboard?${data.orderId}`);
-            }
-            else {
+            if (!response.ok) {
                 console.error("Erreur lors de la commande. Veuillez réessayer...");
             }
+    
         }
         catch (error) {
             console.error(error);

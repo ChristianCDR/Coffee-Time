@@ -3,6 +3,7 @@ FROM php:8.3-fpm
 
 # Dépendances nécessaires
 RUN apt-get update && apt-get install -y \
+    libpq-dev \
     unzip \
     git \
     curl \
@@ -16,6 +17,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get install -y docker.io
+
+RUN docker-php-ext-install pdo pdo_pgsql
+
+RUN docker-php-ext-install sockets
+
+RUN echo "extension=sockets" > /usr/local/etc/php/conf.d/docker-fpm.ini
 
 # Installer Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer

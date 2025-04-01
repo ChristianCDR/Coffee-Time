@@ -4,7 +4,7 @@ http://mercure {
         Access-Control-Allow-Origin *
         Access-Control-Allow-Methods "GET, POST, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, Authorization"
-        cors_origins http://localhost
+        cors_origins http://localhost:3000
     }
 
     reverse_proxy localhost:8081
