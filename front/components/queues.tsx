@@ -33,7 +33,7 @@ const Queues = () => {
 
   return (
     <div>
-      <h1>Liste des files d&apos;attente RabbitMQ (temps réel)</h1>
+      <h1 className="font-bold">Liste des files d&apos;attente RabbitMQ (temps réel)</h1>
       <ul>
         {queues.map((queue, index) => (
           <li key={index}>

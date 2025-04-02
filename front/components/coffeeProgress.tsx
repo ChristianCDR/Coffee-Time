@@ -38,7 +38,7 @@ export default function CoffeeProgress() {
 
     return (
         <div>
-            <h1>État du Processus</h1>
+            <h1 className="font-bold">État du Processus</h1>
             {data ? (
                 <div>
                     <p>Statut: {data.status}</p>
