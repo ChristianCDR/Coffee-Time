@@ -1,1 +1,3 @@
 rabbitmq/
+mercure/.env
+postgres_data/

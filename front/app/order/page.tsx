@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Navbar from "@/components/navbar";
 import Image from "next/image";
-import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic'
+ 
+const NavbarNoSSR = dynamic(() => import("@/components/navbar"), { ssr: false })
 
 export default function Order () {
     // States
@@ -11,9 +12,6 @@ export default function Order () {
     const [size, setSize] = useState<string>("");
     const [error, setError] = useState<string>("");
     const [intensity, setIntensity] = useState<string>("");
-
-    // Router
-    const router = useRouter();
 
     const baseUrl = "http://localhost:8001";
 
@@ -68,22 +66,30 @@ export default function Order () {
                 body: JSON.stringify(order)
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                router.push(`/dashboard?${data.orderId}`);
-            }
-            else {
+            if (!response.ok) {
                 console.error("Erreur lors de la commande. Veuillez réessayer...");
             }
+
+            setSize("");
+            setIntensity("");
+            setError("");
+    
         }
         catch (error) {
             console.error(error);
         }
     };
 
+    const bgStyle = (key: string): string => {
+        if (name && name === key && size && intensity) {
+            return "var(--custom-green)";
+        }
+        return "";
+    }
+
     return (
         <div>
-            <Navbar />
+            <NavbarNoSSR />
             <h1 className="font-bold text-3xl text-center py-3">Personnalisez votre café</h1>
             <div>
                 <h2 className="text-xl text-center py-3">Choisissez votre type, votre taille et votre intensité</h2>
@@ -113,7 +119,7 @@ export default function Order () {
                                                 style={{
                                                     backgroundColor: intensityValue,
                                                     borderColor: intensity === intensityKey && name === key ? "white" : "transparent",
-                                                    borderWidth: intensity === intensityKey && name === key ? 2 : 0
+                                                    borderWidth: intensity === intensityKey && name === key ? 4 : 0
                                                 }}
                                                 onClick={() => { setIntensity(intensityKey); setName(key) }}
                                             > 
@@ -137,8 +143,8 @@ export default function Order () {
                                 </div>
                             </div>
                             <button className="font-bold text-lg border-2 rounded-xl w-1/2 h-10 mx-auto"
-                                style = {{ backgroundColor: name && name === key && size && intensity ? "var(--custom-green)" : "" }}
                                 onClick={() => { orderCoffee(key, size, intensity) }}
+                                style = {{ backgroundColor: bgStyle(key) }}
                             >
                                 Commander
                             </button>

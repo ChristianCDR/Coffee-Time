@@ -25,12 +25,14 @@ services:
     depends_on:
       - rabbitmq
     environment:
-      - MERCURE_URL=${MERCURE_URL}
-      - MERCURE_PUBLIC_URL=${MERCURE_PUBLIC_URL}
-      - MERCURE_ALLOW_ORIGIN=*
+      MERCURE_URL: ${MERCURE_URL}
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
+      MERCURE_EXTRA_DIRECTIVES: ${MERCURE_EXTRA_DIRECTIVES}
+      ALLOW_ANONYMOUS: 1
+      MERCURE_ALLOWED_ORIGINS: '*'
     volumes:
-      - ../back/Caddyfile:/etc/caddy/Caddyfile
-    networks:
+      - ./mercure/Caddyfile:/etc/caddy/Caddyfile
+    networks: 
       - coffee-network
 
   ###> PHP ###
@@ -47,9 +49,10 @@ services:
       - rabbitmq
       - mercure-server
     environment:
-      - MESSENGER_TRANSPORT_DSN=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/%2f/messages
+      - MESSENGER_TRANSPORT_DSN=${MESSENGER_TRANSPORT_DSN}
       - MERCURE_URL=${MERCURE_URL}
       - MERCURE_PUBLIC_URL=${MERCURE_PUBLIC_URL}
+      - DATABASE_URL=pgsql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
     networks:
       - coffee-network
 
@@ -77,7 +80,7 @@ services:
       - rabbitmq
       - php
     environment:
-      - MESSENGER_TRANSPORT_DSN=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672/%2f/messages
+      - MESSENGER_TRANSPORT_DSN=${MESSENGER_TRANSPORT_DSN}
     command: php bin/console messenger:consume async -vv
     networks:
       - coffee-network
@@ -96,9 +99,25 @@ services:
       - ../front:/app
     networks:
       - coffee-network
-    
+
+  database:
+    image: postgres:17-bookworm
+    container_name: database
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}     
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    networks:
+      - coffee-network
+
 volumes:
   rabbitmq:
+  postgres_data:
 
 networks:
   coffee-network:

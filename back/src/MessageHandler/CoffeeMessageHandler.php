@@ -24,14 +24,13 @@ class CoffeeMessageHandler
     {
         
         // Simuler un travail long
-        for ($i = 0; $i <= 60; $i++) {
-            sleep(1);
+        foreach ([10, 30, 60, 100] as $progress) {
+            sleep(2);
             
-            // Mettre à jour la progression
+            // Mettre à jour la progression avec Mercure
             $update = new Update(
-                'coffee/progress', // Le topic
-                json_encode(['progress' => $i]),
-                true
+                "http://localhost/process/coffee", // Le topic
+                json_encode(["status" => "running", "progress" => $progress]) // Les données
             );
 
             try {
