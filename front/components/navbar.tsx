@@ -8,7 +8,7 @@ export default function Navbar() {
                 Coffee Time
             </div>
             <div className="flex justify-around basis-1/3">
-                <a href="/order" className="hover:text-gray-300 p-2 border-b-1">Menu</a>
+                <a href="/" className="hover:text-gray-300 p-2 border-b-1">Menu</a>
                 <a href="/dashboard" target="blank" className="hover:text-gray-300 p-2 border-b-1">Dashboard</a>  
                 <a href="#" className="hover:text-gray-300 p-2 px-5 border-white border-1 rounded-xl">S&apos;inscrire</a>
                 <a href="#" className="hover:text-gray-300 p-2 px-5 border-white border-1 rounded-xl">Se connecter</a>

@@ -1,103 +1,163 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
+import dynamic from 'next/dynamic'
+ 
+const NavbarNoSSR = dynamic(() => import("@/components/navbar"), { ssr: false })
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+export default function Order () {
+    // States
+    const [name, setName] = useState<string>("");
+    const [size, setSize] = useState<string>("");
+    const [error, setError] = useState<string>("");
+    const [intensity, setIntensity] = useState<string>("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    const baseUrl = "http://localhost:8001";
+
+    const coffeeImages = new Map();
+    coffeeImages.set("espresso", "/coffees/espresso.jpg");
+    coffeeImages.set("leppuccino", "/coffees/leppuccino.webp");
+    coffeeImages.set("cappuccino", "/coffees/cappuccino.webp");
+    coffeeImages.set("mocha", "/coffees/mocha.webp");
+    coffeeImages.set("espressino", "/coffees/espressino.jpg");
+    coffeeImages.set("cafeViennois", "/coffees/cafeViennois.jpg");
+    coffeeImages.set("cafeLait", "/coffees/cafeLait.jpg");
+    coffeeImages.set("macchiato", "/coffees/macchiato.webp");
+
+    const sizeIcon = (size: number) => {
+        return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"><path fill="currentColor" d="M7 22h10a1 1 0 0 0 .99-.858L19.867 8H21V6h-1.382l-1.724-3.447A1 1 0 0 0 17 2H7c-.379 0-.725.214-.895.553L4.382 6H3v2h1.133L6.01 21.142A1 1 0 0 0 7 22m10.418-11H6.582l-.429-3h11.693zm-9.551 9l-.429-3h9.123l-.429 3zM7.618 4h8.764l1 2H6.618z"/></svg>
+    }
+
+    const coffeeSizes = new Map();
+    coffeeSizes.set("small", sizeIcon(24));
+    coffeeSizes.set("medium", sizeIcon(32));
+    coffeeSizes.set("large", sizeIcon(40));
+    
+    const coffeeIntensities = new Map();
+    coffeeIntensities.set("light", "var(--light-coffee)");
+    coffeeIntensities.set("medium", "var(--medium-coffee)");
+    coffeeIntensities.set("strong", "var(--dark-coffee)");
+
+    const coffeeImagesArray = Array.from(coffeeImages);
+    const coffeeSizesArray = Array.from(coffeeSizes);
+    const coffeeIntensitiesArray = Array.from(coffeeIntensities);
+
+    const orderCoffee = async (name: string, size: string, intensity: string) => {
+        
+        if (!size || !intensity) {
+            setName(name);
+            setError("Veuillez choisir une taille et une intensité.");
+            return;
+        }
+
+        const order = { 
+            name: name,
+            size: size,
+            intensity: intensity
+        };
+
+        try {
+            const response = await fetch(baseUrl + "/api/order", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(order)
+            });
+
+            if (!response.ok) {
+                console.error("Erreur lors de la commande. Veuillez réessayer...");
+            }
+
+            setSize("");
+            setIntensity("");
+            setError("");
+    
+        }
+        catch (error) {
+            console.error(error);
+        }
+    };
+
+    const bgStyle = (key: string): string => {
+        if (name && name === key && size && intensity) {
+            return "var(--custom-green)";
+        }
+        return "";
+    }
+
+    return (
+        <div>
+            <NavbarNoSSR />
+            <h1 className="font-bold text-3xl text-center py-3">Personnalisez votre café</h1>
+            <div>
+                <h2 className="text-xl text-center py-3">Choisissez votre type, votre taille et votre intensité</h2>
+                <div className="flex flex-wrap justify-around max-w-5/6 mx-auto">
+                    { coffeeImagesArray.map(([key, value]) => (
+                        <div className="flex flex-col justify-around rounded-xl p-2 m-2 h-160 relative"
+                            key={key}
+                        >
+                            <Image
+                                className="rounded-xl"
+                                style={{ boxShadow: '5px 5px 20px var(--dark-coffee)'}}
+                                src={value}
+                                alt={key}
+                                width={300}
+                                height={100}
+                            />
+                            <p className="font-bold text-2xl capitalize"
+                                style={{ color: "var(--dark-coffee)" }}
+                            >{key}</p>
+                            <div className="flex flex-row justify-between">
+                                <div className="flex flex-col justify-between w-2/5">
+                                    <span className="font-bold text-lg">Intensité</span>
+                                    <div className="flex flex-row justify-between items-end">
+                                        { coffeeIntensitiesArray.map(([intensityKey, intensityValue]) => (
+                                            <button className="rounded-xl w-7 h-7 p-1 rounded-full"
+                                                key={intensityKey}
+                                                style={{
+                                                    backgroundColor: intensityValue,
+                                                    borderColor: intensity === intensityKey && name === key ? "white" : "transparent",
+                                                    borderWidth: intensity === intensityKey && name === key ? 4 : 0
+                                                }}
+                                                onClick={() => { setIntensity(intensityKey); setName(key) }}
+                                            > 
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="">
+                                    <span className="font-bold text-lg">Taille</span>
+                                    <div className="flex flex-row justify-between items-end">
+                                        { coffeeSizesArray.map(([sizeKey, sizeValue]) => (
+                                            <button className="p-1 mx-1 rounded-xl"
+                                                key={sizeKey}
+                                                style={{ backgroundColor: size === sizeKey && name === key ? "var(--light-coffee)" : "" }}
+                                                onClick={() => { setSize(sizeKey); setName(key) }}
+                                            >
+                                                {sizeValue}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <button className="font-bold text-lg border-2 rounded-xl w-1/2 h-10 mx-auto"
+                                onClick={() => { orderCoffee(key, size, intensity) }}
+                                style = {{ backgroundColor: bgStyle(key) }}
+                            >
+                                Commander
+                            </button>
+                            {
+                                error && name === key ? 
+                                <p className={`text-red-500 text-sm text-center w-full font-bold absolute bottom-20 right-1/2 transform translate-x-1/2 tanslate-y-1/2`}> {error} </p> 
+                                : ""
+                            }
+                        </div>
+                    ))}
+                </div>
+            </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
-}
+    );
+};
+
