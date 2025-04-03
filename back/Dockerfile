@@ -36,11 +36,11 @@ COPY . /var/www/html
 # Change le propriétaire et le groupe des fichiers, puis applique les bonnes permissions
 RUN chown -R www-data:www-data /var/www/html && chmod -R 755 /var/www/html
 
-RUN chown -R www-data:www-data var/ && chmod -R 755 var/
-
 #Installer toutes les dépendances du projet
 RUN composer install --optimize-autoloader
 # --no-dev
+
+RUN chown -R www-data:www-data var/ && chmod -R 755 var/
 
 # Expose le port 9000 (pour PHP-FPM)
 EXPOSE 9000
