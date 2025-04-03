@@ -114,6 +114,8 @@ final class CoffeeController extends AbstractController
 
         $this->entityManager->flush();
 
-        return new JsonResponse ([], JsonResponse::HTTP_NO_CONTENT);
+        return new JsonResponse ([
+            'orderId' => $data['orderId']
+        ], JsonResponse::HTTP_OK);
     }
 }

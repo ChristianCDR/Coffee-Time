@@ -114,7 +114,8 @@ export default function Order () {
                                     <span className="font-bold text-lg">Intensité</span>
                                     <div className="flex flex-row justify-between items-end">
                                         { coffeeIntensitiesArray.map(([intensityKey, intensityValue]) => (
-                                            <button className="rounded-xl w-7 h-7 p-1 rounded-full"
+                                            <button aria-label={intensityKey}
+                                                className="rounded-xl w-7 h-7 p-1 rounded-full"
                                                 key={intensityKey}
                                                 style={{
                                                     backgroundColor: intensityValue,
@@ -131,7 +132,9 @@ export default function Order () {
                                     <span className="font-bold text-lg">Taille</span>
                                     <div className="flex flex-row justify-between items-end">
                                         { coffeeSizesArray.map(([sizeKey, sizeValue]) => (
-                                            <button className="p-1 mx-1 rounded-xl"
+                                            <button 
+                                                aria-label={sizeKey}
+                                                className="p-1 mx-1 rounded-xl"
                                                 key={sizeKey}
                                                 style={{ backgroundColor: size === sizeKey && name === key ? "var(--light-coffee)" : "" }}
                                                 onClick={() => { setSize(sizeKey); setName(key) }}
@@ -142,7 +145,9 @@ export default function Order () {
                                     </div>
                                 </div>
                             </div>
-                            <button className="font-bold text-lg border-2 rounded-xl w-1/2 h-10 mx-auto"
+                            <button
+                                aria-label={key}
+                                className="font-bold text-lg border-2 rounded-xl w-1/2 h-10 mx-auto"
                                 onClick={() => { orderCoffee(key, size, intensity) }}
                                 style = {{ backgroundColor: bgStyle(key) }}
                             >
