@@ -16,20 +16,36 @@ services:
     networks:
       - coffee-network
   
-  mercure-server:
-    image: dunglas/mercure
-    container_name: coffee-mercure
-    restart: always
+  caddy:
+    image: caddy:latest
     ports:
       - "8081:80"
     depends_on:
-      - rabbitmq
+      - mercure-server
     environment:
       MERCURE_URL: ${MERCURE_URL}
       MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
       MERCURE_EXTRA_DIRECTIVES: ${MERCURE_EXTRA_DIRECTIVES}
       ALLOW_ANONYMOUS: 1
       MERCURE_ALLOWED_ORIGINS: '*'
+    volumes:
+      - ./mercure/Caddyfile:/etc/caddy/Caddyfile
+    networks: 
+      - coffee-network
+      
+  mercure-server:
+    image: dunglas/mercure
+    container_name: coffee-mercure
+    restart: always
+    expose:
+      - "80" 
+    depends_on:
+      - rabbitmq
+    environment:
+      MERCURE_URL: ${MERCURE_URL}
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
+      MERCURE_PUBLISHER_JWT_KEY: YourSecretKeyForPublisher
+      MERCURE_SUBSCRIBER_JWT_KEY: YourSecretKeyForSubscriber
     volumes:
       - ./mercure/Caddyfile:/etc/caddy/Caddyfile
     networks: 

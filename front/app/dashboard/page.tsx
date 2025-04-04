@@ -12,7 +12,7 @@ export default function Dashboard() {
     const [message, setMessage] = useState("");
 
     const manageProcess = async (action: string) => {
-        const response = await fetch(`http://localhost:8001/${action}-process`, {
+        const response = await fetch(`http://localhost:8001/api/${action}-process`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

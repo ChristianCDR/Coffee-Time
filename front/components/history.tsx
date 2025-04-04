@@ -68,7 +68,9 @@ export default function History () {
         if(!response.ok) {
             console.log(response);
         }
-
+        
+        const data = await response.json();
+        setOrderId(data.orderId)
         setMessage('Commande terminée!');
     }
 
