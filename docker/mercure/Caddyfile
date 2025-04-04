@@ -4,10 +4,10 @@ http://localhost {
 
     header {
 
-        Access-Control-Allow-Origin "front:3000"
+        Access-Control-Allow-Origin "http://localhost:3000"
         Access-Control-Allow-Methods "GET, POST, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, Authorization"
-        cors_origins "front:3000"
+        cors_origins "http://localhost:3000"
 
         Authorization "Bearer YourSecretKeyForPublisher"
     }
