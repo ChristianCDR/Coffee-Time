@@ -1,11 +1,14 @@
-http://mercure {
+http://localhost {
     
+    reverse_proxy mercure-server:80
+
     header {
-        Access-Control-Allow-Origin *
+
+        Access-Control-Allow-Origin "http://localhost:3000"
         Access-Control-Allow-Methods "GET, POST, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, Authorization"
-        cors_origins http://localhost:3000
-    }
+        cors_origins "http://localhost:3000"
 
-    reverse_proxy localhost:8081
+        Authorization "Bearer YourSecretKeyForPublisher"
+    }
 }

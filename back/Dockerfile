@@ -16,6 +16,10 @@ RUN apt-get update && apt-get install -y \
     # Nettoie les fichiers inutiles après installation
     && rm -rf /var/lib/apt/lists/*
 
+RUN groupadd -g 998 docker
+
+RUN usermod -aG docker www-data
+
 RUN apt-get update && apt-get install -y docker.io
 
 RUN docker-php-ext-install pdo pdo_pgsql

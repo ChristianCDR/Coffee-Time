@@ -34,9 +34,21 @@ class RabbitMQService
         curl_setopt($ch, CURLOPT_USERPWD, "$this->username:$this->password");
 
         $response = curl_exec($ch);
+
+        // Vérification d'erreur
+        if ($response === false) {
+            $errorMessage = curl_error($ch);
+            curl_close($ch);
+            throw new \Exception("Erreur cURL : $errorMessage");
+        }
+
         curl_close($ch);
 
         $queues = json_decode($response, true);
+
+        if (!$queues) {
+            throw new \Exception('Erreur lors du décodage de la réponse de RabbitMQ.');
+        }
 
         // Envoi de l'update en temps réel avec Mercure
         $update = new Update(

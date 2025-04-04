@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Service\DockerService;
 
+#[Route('/api')]
 final class ProcessController extends AbstractController
 {
     private $dockerService;

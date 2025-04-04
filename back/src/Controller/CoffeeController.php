@@ -94,7 +94,9 @@ final class CoffeeController extends AbstractController
 
         $this->entityManager->flush();
 
-        return new JsonResponse ($data, JsonResponse::HTTP_OK);
+        return new JsonResponse ([
+            'orderId' => $data['orderId']
+        ], JsonResponse::HTTP_OK);
     }
 
     #[Route('/order/delete', name: 'app_order_delete', methods: ['DELETE'])]
@@ -114,6 +116,8 @@ final class CoffeeController extends AbstractController
 
         $this->entityManager->flush();
 
-        return new JsonResponse ([], JsonResponse::HTTP_NO_CONTENT);
+        return new JsonResponse ([
+            'orderId' => $data['orderId']
+        ], JsonResponse::HTTP_OK);
     }
 }
