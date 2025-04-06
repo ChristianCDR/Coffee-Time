@@ -15,40 +15,27 @@ services:
       - ./rabbitmq/config:/etc/rabbitmq
     networks:
       - coffee-network
-  
-  caddy:
-    image: caddy:latest
-    ports:
-      - "8081:80"
-    depends_on:
-      - mercure-server
-    environment:
-      MERCURE_URL: ${MERCURE_URL}
-      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
-      MERCURE_EXTRA_DIRECTIVES: ${MERCURE_EXTRA_DIRECTIVES}
-      ALLOW_ANONYMOUS: 1
-      MERCURE_ALLOWED_ORIGINS: '*'
-    volumes:
-      - ./mercure/Caddyfile:/etc/caddy/Caddyfile
-    networks: 
-      - coffee-network
       
   mercure-server:
     image: dunglas/mercure
     container_name: coffee-mercure
     restart: always
-    expose:
-      - "80" 
+    ports:
+      - "8081:80"
     depends_on:
       - rabbitmq
     environment:
       MERCURE_URL: ${MERCURE_URL}
       MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
-      MERCURE_PUBLISHER_JWT_KEY: YourSecretKeyForPublisher
-      MERCURE_SUBSCRIBER_JWT_KEY: YourSecretKeyForSubscriber
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_KEY}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_KEY}
+      MERCURE_ALLOW_ANONYMOUS: '1'
+      MERCURE_CORS_ALLOWED_ORIGINS: 'http://localhost:3000'
     volumes:
+      - mercure_data:/data
+      - mercure_config:/config
       - ./mercure/Caddyfile:/etc/caddy/Caddyfile
-    networks: 
+    networks:
       - coffee-network
 
   ###> PHP ###
@@ -110,7 +97,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - MERCURE_PUBLIC_URL=${MERCURE_PUBLIC_URL}
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
     volumes:
       - ../front:/app
     networks:
@@ -134,6 +121,8 @@ services:
 volumes:
   rabbitmq:
   postgres_data:
+  mercure_data:
+  mercure_config:
 
 networks:
   coffee-network:

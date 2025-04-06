@@ -1,14 +1,39 @@
 http://localhost {
     
-    reverse_proxy mercure-server:80
+    reverse_proxy * localhost:80
+
+    mercure {
+        publish "http://localhost"
+
+        publisher_jwt {env.MERCURE_JWT_SECRET}
+        subscriber_jwt {env.MERCURE_JWT_SECRET}
+
+        subscriptions {
+            # allow_jwt
+            allow_anonymous
+        }
+    }
 
     header {
 
         Access-Control-Allow-Origin "http://localhost:3000"
         Access-Control-Allow-Methods "GET, POST, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, Authorization"
-        cors_origins "http://localhost:3000"
+        Access-Control-Allow-Credentials "true"
 
-        Authorization "Bearer YourSecretKeyForPublisher"
+        cors_origins "http://localhost:3000"
+    }
+
+    # Répondre à la pré-requête OPTIONS pour CORS
+    @preflight {
+        method OPTIONS
+    }
+    respond @preflight 204
+
+    # Configurer les en-têtes pour gérer les événements SSE
+    header {
+        Cache-Control "no-cache"
+        Connection "keep-alive"
+        Content-Type "text/event-stream"
     }
 }

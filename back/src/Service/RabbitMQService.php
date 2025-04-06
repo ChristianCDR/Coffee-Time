@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Service\JwtService;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
@@ -12,14 +13,16 @@ class RabbitMQService
     private $hub;
     private $username;
     private $password;
+    private $jwtService;
 
-    public function __construct(HubInterface $hub)
+    public function __construct(HubInterface $hub, JwtService $jwtService)
     {
         $this->username = $_ENV['RABBITMQ_USER'];
         $this->password = $_ENV['RABBITMQ_PASSWORD'];
 
         $this->connection = new AMQPStreamConnection('rabbitmq', 5672, $this->username, $this->password, '/');
         $this->hub = $hub;
+        $this->jwtService = $jwtService;
     }
 
     public function getQueues()
@@ -50,11 +53,26 @@ class RabbitMQService
             throw new \Exception('Erreur lors du décodage de la réponse de RabbitMQ.');
         }
 
+        $jwt = $this->jwtService->generateJwt([
+            'mercure' => [
+                'subscribe' => ['http://localhost/queues']
+            ]
+        ]);
+
+        if (!$jwt) {
+            throw new \Exception('Erreur lors de la génération du JWT.');
+        }
         // Envoi de l'update en temps réel avec Mercure
         $update = new Update(
-            '/queues',  // Le topic Mercure
-            json_encode($queues)
+            'http://localhost/queues',  // Le topic Mercure
+            json_encode(['message' => 'Nouveau message depuis Symfony']),
+            false,
+            null,
+            null,
+            null,
+            $jwt
         );
+
         $this->hub->publish($update);
 
         return $queues;
