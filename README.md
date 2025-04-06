@@ -25,20 +25,25 @@ Avant de commencer, assure-toi d'avoir installé les outils suivants sur ta mach
 
         Une fois le projet cloné, copie le fichier .env dans le dossier back
 
+    3 - Installer les dépendances:
+        # Backend
+        
+        Navigue dans le répertoire back, puis installe les dépendances nécessaires en exécutant :
 
-    3 - Installer les dépendances du frontend :
+        composer install 
+
+        # Frontend
 
         Navigue dans le répertoire front, puis installe les dépendances nécessaires en exécutant :
 
-        npm install
+        npm install    
 
-    4 - Configurer les droits du dossier RabbitMQ :
+    4 - Ajouter les clés JWT dans Caddyfile
 
-        Le dossier rabbitmq/logs doit avoir les bons droits pour être utilisé correctement par RabbitMQ dans le conteneur. Utilise les commandes suivantes pour attribuer les permissions nécessaires :
+        Accéder à docker/mercure/Caddyfile et ajouter le secret JWT:
 
-        # 999:999 correspond à l'UID/GID de RabbitMQ dans le conteneur
-        sudo chown -R 999:999 rabbitmq/logs
-        sudo chmod -R 750 rabbitmq/logs
+        publisher_jwt "!ChangeMe!"
+        subscriber_jwt "!ChangeMe!"
 
     5 - Lancer les conteneurs Docker :
 
@@ -58,9 +63,23 @@ Avant de commencer, assure-toi d'avoir installé les outils suivants sur ta mach
 
     http://localhost:3000
 
+**Accéder à la documentation des routes**
+
+     Une fois que tous les services sont lancés, tu peux accéder à la documentation des routes depuis ton navigateur à l'adresse suivante :
+
+    http://localhost:8001/api/doc
+
 **Résolution des problèmes**
 
-    Problèmes de permissions avec RabbitMQ : Si tu rencontres des erreurs liées aux permissions du dossier rabbitmq/logs, assure-toi que les commandes chown et chmod ont bien été exécutées correctement.
+    Problèmes de permissions avec RabbitMQ : Si tu rencontres des erreurs liées aux permissions du dossier rabbitmq/logs
+    
+        Configurer les droits du dossier RabbitMQ :
+
+        Le dossier rabbitmq/logs doit avoir les bons droits pour être utilisé correctement par RabbitMQ dans le conteneur. Utilise les commandes suivantes pour attribuer les permissions nécessaires :
+
+        # 999:999 correspond à l'UID/GID de RabbitMQ dans le conteneur
+        sudo chown -R 999:999 rabbitmq/logs
+        sudo chmod -R 750 rabbitmq/logs
 
     Dépendances manquantes : Si des erreurs apparaissent lors de l'exécution de npm install, vérifie que ton fichier package.json est correct et que tu as une version de Node.js compatible.
 

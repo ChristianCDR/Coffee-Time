@@ -51,6 +51,7 @@ services:
     depends_on:
       - rabbitmq
       - mercure-server
+    command: bash -c "php bin/console doctrine:migrations:migrate --no-interaction && php-fpm"
     environment:
       - MESSENGER_TRANSPORT_DSN=${MESSENGER_TRANSPORT_DSN}
       - MERCURE_URL=${MERCURE_URL}
