@@ -90,9 +90,9 @@ export default function Order () {
     return (
         <div>
             <NavbarNoSSR />
-            <h1 className="font-bold text-3xl text-center py-3">Personnalisez votre café</h1>
+            <h1 className="font-bold text-xl lg:text-3xl text-center py-3">Personnalisez votre café</h1>
             <div>
-                <h2 className="text-xl text-center py-3">Choisissez votre type, votre taille et votre intensité</h2>
+                <h2 className="text-lg lg:text-xl text-center py-3">Choisissez votre type, votre taille et votre intensité</h2>
                 <div className="flex flex-wrap justify-around max-w-5/6 mx-auto">
                     { coffeeImagesArray.map(([key, value]) => (
                         <div className="flex flex-col justify-around rounded-xl p-2 m-2 h-160 relative"
@@ -109,10 +109,10 @@ export default function Order () {
                             <p className="font-bold text-2xl capitalize"
                                 style={{ color: "var(--dark-coffee)" }}
                             >{key}</p>
-                            <div className="flex flex-row justify-between">
-                                <div className="flex flex-col justify-between w-2/5">
+                            <div className="flex flex-col sm:flex-row justify-between">
+                                <div className="flex flex-col justify-between w-1/2 sm:w-2/5 ">
                                     <span className="font-bold text-lg">Intensité</span>
-                                    <div className="flex flex-row justify-between items-end">
+                                    <div className="flex flex-row justify-between items-end my-5">
                                         { coffeeIntensitiesArray.map(([intensityKey, intensityValue]) => (
                                             <button aria-label={intensityKey}
                                                 className="rounded-xl w-7 h-7 p-1 rounded-full"
