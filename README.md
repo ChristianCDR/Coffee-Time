@@ -19,7 +19,7 @@ Avant de commencer, assure-toi d'avoir installé les outils suivants sur ta mach
 
     1 - Cloner le projet depuis le dépôt GitHub :
         
-        git pull https://github.com/ChristianCDR/Coffee-Time.git
+        git clone https://github.com/ChristianCDR/Coffee-Time.git
 
     2 - Configurer l'environnement de l'application :
 
