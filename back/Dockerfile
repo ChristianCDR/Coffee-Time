@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     # Nettoie les fichiers inutiles après installation
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -g 998 docker
+RUN groupadd -g 994 docker
 
 RUN usermod -aG docker www-data
 
