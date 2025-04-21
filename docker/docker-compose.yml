@@ -7,6 +7,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     command: bash -c "rabbitmq-plugins enable rabbitmq_management rabbitmq_mqtt && rabbitmq-server"
+    env_file:
+      - ../back/.env
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
@@ -23,6 +25,8 @@ services:
     restart: always
     ports:
       - "8081:80"
+    env_file:
+      - ../back/.env
     environment:
       # Uncomment the following line to disable HTTPS,
       SERVER_NAME: ':80'
@@ -56,12 +60,15 @@ services:
     depends_on:
       - rabbitmq
       - mercure-server
+      - database
     command: bash -c "php bin/console doctrine:migrations:migrate --no-interaction && php-fpm"
+    env_file:
+      - ../back/.env
     environment:
       MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN}
       MERCURE_URL: ${MERCURE_URL}
       MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
-      DATABASE_URL: pgsql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}"
     volumes:
       - ../back:/var/www/html
       - /var/run/docker.sock:/var/run/docker.sock
@@ -91,8 +98,10 @@ services:
     depends_on:
       - rabbitmq
       - php
+    env_file:
+      - ../back/.env
     environment:
-      - MESSENGER_TRANSPORT_DSN=${MESSENGER_TRANSPORT_DSN}
+      MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN}
     command: php bin/console messenger:consume async -vv
     networks:
       - coffee-network
@@ -105,6 +114,8 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    env_file:
+      - ../back/.env
     environment:
       MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL}
     volumes:
@@ -114,14 +125,16 @@ services:
 
   database:
     image: postgres:17-bookworm
-    container_name: database
+    container_name: coffee-database
     restart: always
     ports:
       - "5432:5432"
+    env_file:
+      - ../back/.env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_USER: ${POSTGRES_USER}     
+      POSTGRES_USER: ${POSTGRES_USER}
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
     networks:

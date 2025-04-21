@@ -3,27 +3,44 @@
 namespace App\Controller;
 
 use App\Entity\CoffeeOrder;
+use App\DTO\CoffeeOrderDTO;
 use App\Repository\CoffeeOrderRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use App\Message\CoffeeMessage;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Attributes as OA;
+use Psr\Log\LoggerInterface;
 
 #[Route('/api')]
 final class CoffeeController extends AbstractController
 {
     private $entityManager;
+    private $coffeeOrderRepository;
+    private $serializer;
+    private $validator;
+    private $logger;
 
-    public function __construct(EntityManagerInterface $entityManager, CoffeeOrderRepository $coffeeOrderRepository)
+    public function __construct(
+        EntityManagerInterface $entityManager,
+        CoffeeOrderRepository $coffeeOrderRepository,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator,
+        LoggerInterface $logger
+    )
     {
         $this->entityManager = $entityManager;
         $this->coffeeOrderRepository = $coffeeOrderRepository;
+        $this->serializer = $serializer;
+        $this->validator = $validator;
+        $this->logger = $logger;
     }
 
     #[Route('/order/history', name: 'app_order_history', methods: ['GET'])]
@@ -136,7 +153,17 @@ final class CoffeeController extends AbstractController
                 content: new OA\JsonContent(
                     type: 'object',
                     properties: [
-                        new OA\Property(property: 'error', type: 'string', example: 'Invalid request body')
+                        new OA\Property(
+                            property: 'errors',
+                            type: 'array',
+                            items: new OA\Items(
+                                type: 'object',
+                                properties: [
+                                    new OA\Property(property: 'property', type: 'string', example: 'name'),
+                                    new OA\Property(property: 'message', type: 'string', example: 'Le nom doit être parmi les choix autorisés.')
+                                ]
+                            )
+                        )
                     ]
                 )
             )
@@ -144,19 +171,57 @@ final class CoffeeController extends AbstractController
     )]
     public function prepareCoffee(MessageBusInterface $messageBus, Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $data = $request->getContent();
+
+        try {
+            $dto = $this->serializer->deserialize($data, CoffeeOrderDTO::class, 'json');
+        }
+        catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+
+            return new JsonResponse([
+                'error' => 'Le corps de la requête est invalide.',
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $violations = $this->validator->validate($dto);
+
+        if(count($violations) > 0) {
+            $errors =[];
+
+            foreach($violations as $violation) {
+                $errors[] = [
+                    'property' => $violation->getPropertyPath(),
+                    'message' => $violation->getMessage()
+                ];
+            }
+            return new JsonResponse([
+                'errors' => $errors,
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
 
         $orderId = uniqid();
+
         $message = new CoffeeMessage($orderId);
-        $messageBus->dispatch($message);
+
+        try {
+            $messageBus->dispatch($message);
+        }
+        catch (\Exception $e) {
+            $this->logger->error("Erreur lors de l'envoi AMQP : ". $e->getMessage());
+
+            return new JsonResponse([
+                'error' => 'Service temporairement indisponible.'
+            ], JsonResponse::HTTP_SERVICE_UNAVAILABLE);
+        }
 
         $order = new CoffeeOrder();
 
         $order
             ->setOrderID($orderId)
-            ->setName($data['name'])
-            ->setIntensity($data['intensity'])
-            ->setSize($data['size'])
+            ->setName($dto->name)
+            ->setIntensity($dto->intensity)
+            ->setSize($dto->size)
             ->setCreatedAt(new \DateTime())
         ;
 
@@ -165,7 +230,7 @@ final class CoffeeController extends AbstractController
 
         return new JsonResponse([
             'status' => 'Commande reçue !',
-            'orderId' => 'Votre numéro de commande est '.$orderId
+            'orderId' => $orderId
         ], JsonResponse::HTTP_CREATED);
     }
 

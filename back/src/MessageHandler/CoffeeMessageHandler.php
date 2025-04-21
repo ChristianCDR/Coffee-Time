@@ -27,20 +27,30 @@ class CoffeeMessageHandler
     {
         // Simuler un travail long
         foreach ([10, 30, 60, 100] as $progress) {
-            sleep(2);
             
             $queues = $this->rabbitMQService->getQueues();
 
+            $data = [
+                'progress' => $progress,
+                'orderId'  => $message->getOrderId(),
+            ];
+
+            if ($progress >= 60) {
+                $data['message'] = $queues;
+            }
+
             $update = new Update(
                 'https://example.com/books/1',  // Le topic Mercure
-                json_encode(['message' => $queues])
+                json_encode($data),
             );
 
             try {
                 $this->hub->publish($update);
             } catch (\Exception $e) {
                 $this->logger->error('Erreur lors de la publication Mercure : ' . $e->getMessage());
-            }    
+            }
+
+            sleep(2);
         }
     }
 }
