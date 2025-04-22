@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Tests\Controller;
+namespace App\Tests\Functional\Controller;
 
 use App\Entity\CoffeeOrder;
 use App\Repository\CoffeeOrderRepository;
@@ -76,5 +76,10 @@ final class CoffeeControllerTest extends WebTestCase
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
         $this->assertArrayHasKey('orderId', $response);
+    }
+
+    public function testUnsuccessfulOrderCreation(): void
+    {
+        
     }
 }
