@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-// import CoffeeProgress from "@/components/coffeeProgress";
+import CoffeeProgress from "@/components/coffeeProgress";
 import Queues from "@/components/queues";
 import History from "@/components/history";
-import dynamic from 'next/dynamic'
+import dynamic from 'next/dynamic';
 
 const NavbarNoSSR = dynamic(() => import("@/components/navbar"), { ssr: false })
 
 export default function Dashboard() {    
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState("")
 
     const manageProcess = async (action: string) => {
         setMessage("Loading...");
@@ -22,6 +22,7 @@ export default function Dashboard() {
         });
         if (response.ok) {
             setMessage("Succès!");
+            window.location.reload();
         }
         else {
             setMessage("Une erreur est survenue.");
@@ -43,7 +44,7 @@ export default function Dashboard() {
             
             <div className="flex flex-col items-center my-5">
                 <div className="flex flex-row justify-around items-center py-3 w-1/2 mx-auto">
-                    {/* <CoffeeProgress /> */}
+                    <CoffeeProgress />
                     <Queues />
                 </div>
                 <div className="w-4/5 md:w-2/3 mt-10 overflow-x-auto">

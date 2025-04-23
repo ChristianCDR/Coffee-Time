@@ -6,7 +6,7 @@ type Queue = {
 };
 
 const Queues = () => {
-    const [queue, setQueue] = useState<Queue>();
+    const [queue, setQueue] = useState<Queue>({'node': '', 'messages': 0});
 
     const displayEvents = () => {
       const eventSource = new EventSource("http://localhost:8081/.well-known/mercure?topic=https://example.com/books/1");
@@ -14,7 +14,7 @@ const Queues = () => {
       eventSource.onmessage = event => {
         const data = JSON.parse(event.data);
         // console.log(data.message[0]);
-        setQueue(data.message[0]);
+        if (data && data.message) setQueue(data.message[0]);
       };
 
       // Clean up the EventSource on component unmount

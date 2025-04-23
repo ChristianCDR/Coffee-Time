@@ -62,7 +62,7 @@ class CoffeeControllerTest extends TestCase
         $this->violationList->method('count')->willReturn(0);
         $this->validator->method('validate')->willReturn($this->violationList);
 
-        $message = new CoffeeMessage(uniqid());
+        $message = new CoffeeMessage('test-order-id');
         $this->messageBus
             ->expects($this->once())
             ->method('dispatch')

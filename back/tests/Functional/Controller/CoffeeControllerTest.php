@@ -60,7 +60,7 @@ final class CoffeeControllerTest extends WebTestCase
         $this->client->request(
             'POST',
             '/api/order',
-            server: ['Content-Type' => 'application/json'],
+            server: ['CONTENT_TYPE' => 'application/json'],
             content: json_encode(
                 [
                     'name' => 'espresso',
@@ -78,8 +78,19 @@ final class CoffeeControllerTest extends WebTestCase
         $this->assertArrayHasKey('orderId', $response);
     }
 
-    public function testUnsuccessfulOrderCreation(): void
+    public function testPrepareCoffeeInvalidJson(): void
     {
-        
+        $this->client->request(
+            'POST', 
+            '/api/order', 
+            server: ['CONTENT_TYPE' => 'application/json'], 
+            content: 'invalid json'
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+        $this->assertJson($client->getResponse()->getContent());
+
+        $responseData = json_decode($client->getResponse()->getContent(), true);
+        $this->assertArrayHasKey('error', $responseData);
     }
 }

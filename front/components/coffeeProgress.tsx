@@ -3,36 +3,25 @@
 import { useEffect, useState } from "react";
 
 type CoffeeProgressData = {
-    status: string;
     progress: number;
+    orderId: string;
 };
 
-export default function CoffeeProgress() {
-    // const [progress, setProgress] = useState();
-    // const [status, setStatus] = useState('Préparation en cours...');    
+export default function CoffeeProgress() { 
     const [data, setData] = useState<CoffeeProgressData>();
 
     useEffect(() => {
-        const fetchCoffeeProgress = async () => {
-            const response = await fetch('http://localhost:8001/api/queues');
-            if(response.ok) {
-                const data = await response.json();
-                setData(data);
-            }
+        const eventSource = new EventSource("http://localhost:8081/.well-known/mercure?topic=https://example.com/books/1");
 
-            const eventSource = new EventSource("http://localhost:8081/.well-known/mercure?topic=" + encodeURIComponent('http://localhost/process/coffee'));
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log(data);
+            setData(data);
+        };
 
-            eventSource.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                setData(data);
-            };
-
-            return () => {
-                eventSource.close();
-            };
-        }
-        
-        fetchCoffeeProgress();
+        return () => {
+            eventSource.close();
+        };
 
     }, []);
 
@@ -41,7 +30,7 @@ export default function CoffeeProgress() {
             <h1 className="font-bold">État du Processus</h1>
             {data ? (
                 <div>
-                    <p>Statut: {data.status}</p>
+                    <p>Commande: {data.orderId}</p>
                     <p>Progression: {data.progress}%</p>
                 </div>
             ) : (

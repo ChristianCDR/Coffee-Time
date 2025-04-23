@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\CoffeeOrder;
 use App\DTO\CoffeeOrderDTO;
+use App\Factory\CoffeeOrderFactory;
+use App\Service\CoffeeOrderHandler;
 use App\Repository\CoffeeOrderRepository;
 use App\Message\CoffeeMessage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,6 +21,7 @@ use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Attributes as OA;
 use Psr\Log\LoggerInterface;
 
+
 #[Route('/api')]
 final class CoffeeController extends AbstractController
 {
@@ -27,13 +30,17 @@ final class CoffeeController extends AbstractController
     private $serializer;
     private $validator;
     private $logger;
+    private $factory;
+    private $coffeeOrderHandler;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         CoffeeOrderRepository $coffeeOrderRepository,
         SerializerInterface $serializer,
         ValidatorInterface $validator,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        CoffeeOrderFactory $factory,
+        CoffeeOrderHandler $coffeeOrderHandler
     )
     {
         $this->entityManager = $entityManager;
@@ -41,6 +48,8 @@ final class CoffeeController extends AbstractController
         $this->serializer = $serializer;
         $this->validator = $validator;
         $this->logger = $logger;
+        $this->factory = $factory;
+        $this->coffeeOrderHandler = $coffeeOrderHandler;
     }
 
     #[Route('/order/history', name: 'app_order_history', methods: ['GET'])]
@@ -171,62 +180,16 @@ final class CoffeeController extends AbstractController
     )]
     public function prepareCoffee(MessageBusInterface $messageBus, Request $request): JsonResponse
     {
-        $data = $request->getContent();
-
-        try {
-            $dto = $this->serializer->deserialize($data, CoffeeOrderDTO::class, 'json');
+        try{
+            $order = $this->coffeeOrderHandler->handle($messageBus, $request);
         }
-        catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
-
-            return new JsonResponse([
-                'error' => 'Le corps de la requête est invalide.',
-            ], JsonResponse::HTTP_BAD_REQUEST);
+        catch(InvalidCoffeeOrderException $e){
+            return new JsonResponse(['errors' => $e->getErrors()], JsonResponse::HTTP_BAD_REQUEST);
+        } catch (\Throwable $e) {
+            $this->logger->error('Erreur lors de la commande : ' . $e->getMessage());
+    
+            return new JsonResponse(['error' => 'Service temporairement indisponible.'], JsonResponse::HTTP_SERVICE_UNAVAILABLE);
         }
-
-        $violations = $this->validator->validate($dto);
-
-        if(count($violations) > 0) {
-            $errors =[];
-
-            foreach($violations as $violation) {
-                $errors[] = [
-                    'property' => $violation->getPropertyPath(),
-                    'message' => $violation->getMessage()
-                ];
-            }
-            return new JsonResponse([
-                'errors' => $errors,
-            ], JsonResponse::HTTP_BAD_REQUEST);
-        }
-
-        $orderId = uniqid();
-
-        $message = new CoffeeMessage($orderId);
-
-        try {
-            $messageBus->dispatch($message);
-        }
-        catch (\Exception $e) {
-            $this->logger->error("Erreur lors de l'envoi AMQP : ". $e->getMessage());
-
-            return new JsonResponse([
-                'error' => 'Service temporairement indisponible.'
-            ], JsonResponse::HTTP_SERVICE_UNAVAILABLE);
-        }
-
-        $order = new CoffeeOrder();
-
-        $order
-            ->setOrderID($orderId)
-            ->setName($dto->name)
-            ->setIntensity($dto->intensity)
-            ->setSize($dto->size)
-            ->setCreatedAt(new \DateTime())
-        ;
-
-        $this->entityManager->persist($order);
-        $this->entityManager->flush();
 
         return new JsonResponse([
             'status' => 'Commande reçue !',
@@ -274,6 +237,12 @@ final class CoffeeController extends AbstractController
     public function edit(Request $request): JsonResponse
     {
         $data= json_decode($request->getContent(), true);
+
+        if(!isset($data['orderId']) || !is_string($data['orderId'])) {
+            return new JsonResponse([
+                'error' => 'orderId est manquant ou invalide.',
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
 
         $order = $this->coffeeOrderRepository->findOneBy(['orderID' => $data['orderId']]);
 
@@ -332,6 +301,12 @@ final class CoffeeController extends AbstractController
     public function delete(Request $request): JsonResponse
     {
         $data= json_decode($request->getContent(), true);
+
+        if(!isset($data['orderId']) || !is_string($data['orderId'])) {
+            return new JsonResponse([
+                'error' => 'orderId est manquant ou invalide.',
+            ], JsonResponse::HTTP_BAD_REQUEST);
+        }
 
         $order = $this->coffeeOrderRepository->findOneBy(['orderID' => $data['orderId']]);
 
