@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\CoffeeOrder;
 use App\DTO\CoffeeOrderDTO;
 use App\Message\CoffeeMessage;
+use App\Factory\CoffeeOrderFactory;
 use App\Exception\InvalidCoffeeOrderException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -17,19 +18,25 @@ class CoffeeOrderHandler
     private $serializer;
     private $validator;
     private $entityManager;
+    private $messageBus;
+    private $factory;
 
-    public function __constructor(
+    public function __construct(
         SerializerInterface $serializer,
         ValidatorInterface $validator,
-        EntityManagerInterface $entityManager   
+        EntityManagerInterface $entityManager,
+        MessageBusInterface $messageBus,
+        CoffeeOrderFactory $factory
     )
     {
         $this->serializer = $serializer;
         $this->validator = $validator;
         $this->entityManager = $entityManager;
+        $this->messageBus = $messageBus;
+        $this->factory = $factory;
     }
 
-    public function handle(MessageBusInterface $messageBus, Request $request): CoffeeOrder
+    public function handle(Request $request): CoffeeOrder
     {
         $dto = $this->deserializeRequest($request);
 
@@ -43,7 +50,7 @@ class CoffeeOrderHandler
         $this->entityManager->flush();
 
         try {
-            $messageBus->dispatch($message);
+            $this->messageBus->dispatch($message);
         }
         catch (HandlerFailedException $e) {
             $this->logger->error("Erreur lors de l'envoi AMQP : ". $e->getMessage());
@@ -60,7 +67,7 @@ class CoffeeOrderHandler
         try {
             $dto = $this->serializer->deserialize($data, CoffeeOrderDTO::class, 'json');
         }
-        catch (\Exception $e) {
+        catch (NotEncodableValueException $e) {
             $this->logger->warning('Erreur de désérialisation : '. $e->getMessage());
             throw new InvalidCoffeeOrderException(['error' => 'Format JSON invalide.']);
         }

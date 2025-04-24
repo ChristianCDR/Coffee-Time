@@ -7,6 +7,7 @@ use App\DTO\CoffeeOrderDTO;
 use App\Factory\CoffeeOrderFactory;
 use App\Service\CoffeeOrderHandler;
 use App\Repository\CoffeeOrderRepository;
+use App\Exception\InvalidCoffeeOrderException;
 use App\Message\CoffeeMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -175,13 +176,23 @@ final class CoffeeController extends AbstractController
                         )
                     ]
                 )
+            ),
+            new OA\Response(
+                response: 503,
+                description: 'Service Unavailable',
+                content: new OA\JsonContent(
+                    type: 'object',
+                    properties: [
+                        new OA\Property(property: 'error', type: 'string', example: 'Service temporairement indisponible.'),
+                    ]
+                )
             )
         ]
     )]
-    public function prepareCoffee(MessageBusInterface $messageBus, Request $request): JsonResponse
+    public function prepareCoffee(Request $request): JsonResponse
     {
         try{
-            $order = $this->coffeeOrderHandler->handle($messageBus, $request);
+            $order = $this->coffeeOrderHandler->handle($request);
         }
         catch(InvalidCoffeeOrderException $e){
             return new JsonResponse(['errors' => $e->getErrors()], JsonResponse::HTTP_BAD_REQUEST);
@@ -193,7 +204,7 @@ final class CoffeeController extends AbstractController
 
         return new JsonResponse([
             'status' => 'Commande reçue !',
-            'orderId' => $orderId
+            'orderId' => $order->getOrderID()
         ], JsonResponse::HTTP_CREATED);
     }
 

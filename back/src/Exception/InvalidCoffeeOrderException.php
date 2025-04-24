@@ -4,9 +4,8 @@ namespace App\Exception;
 
 class InvalidCoffeeOrderException extends \Exception
 {
-    private $errors;
 
-    public function __constructor(array $errors)
+    public function __construct(private array $errors)
     {
         parent::__construct('Commande invalide');
     }
