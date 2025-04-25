@@ -153,7 +153,7 @@ final class CoffeeController extends AbstractController
                     type: 'object',
                     properties: [
                         new OA\Property(property: 'status', type: 'string', example: "Commande reçue !"),
-                        new OA\Property(property: 'orderId', type: 'string', example: "Votre numéro de commande est 67f2e84ab634e")
+                        new OA\Property(property: 'orderId', type: 'string', example: "71c773e3-5206-49e6-8eda-fd29f0ebb79e")
                     ]
                 )
             ),

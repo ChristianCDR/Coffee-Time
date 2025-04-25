@@ -10,8 +10,11 @@ use App\Exception\InvalidCoffeeOrderException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Messenger\Exception\HandlerFailedException;
+use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 
 class CoffeeOrderHandler
 {
@@ -20,13 +23,15 @@ class CoffeeOrderHandler
     private $entityManager;
     private $messageBus;
     private $factory;
+    private $logger;
 
     public function __construct(
         SerializerInterface $serializer,
         ValidatorInterface $validator,
         EntityManagerInterface $entityManager,
         MessageBusInterface $messageBus,
-        CoffeeOrderFactory $factory
+        CoffeeOrderFactory $factory,
+        LoggerInterface $logger,
     )
     {
         $this->serializer = $serializer;
@@ -34,6 +39,7 @@ class CoffeeOrderHandler
         $this->entityManager = $entityManager;
         $this->messageBus = $messageBus;
         $this->factory = $factory;
+        $this->logger = $logger;
     }
 
     public function handle(Request $request): CoffeeOrder
