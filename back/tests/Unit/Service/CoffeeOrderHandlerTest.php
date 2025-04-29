@@ -50,7 +50,8 @@ class CoffeeOrderHandlerTest extends TestCase
             $this->entityManager,
             $this->messageBus,
             $this->factory,
-            $this->logger
+            $this->logger,
+            $this->coffeeOrderRepository
         );
     }
 
@@ -104,7 +105,7 @@ class CoffeeOrderHandlerTest extends TestCase
 
         $coffeeOrderHandler = $this->getCoffeeOrderHandler();
 
-        $response = $coffeeOrderHandler->handle($request);
+        $response = $coffeeOrderHandler->handleCreateOrder($request);
 
         $this->assertInstanceOf(CoffeeOrder::class, $response);
         $this->assertEquals('espresso', $response->getName());
@@ -224,6 +225,6 @@ class CoffeeOrderHandlerTest extends TestCase
 
         $this->expectException(HandlerFailedException::class);
 
-        $coffeeOrderHandler->handle($request);
+        $coffeeOrderHandler->handleCreateOrder($request);
     }
 }

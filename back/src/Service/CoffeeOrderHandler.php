@@ -6,6 +6,7 @@ use App\Entity\CoffeeOrder;
 use App\DTO\CoffeeOrderDTO;
 use App\Message\CoffeeMessage;
 use App\Factory\CoffeeOrderFactory;
+use App\Repository\CoffeeOrderRepository;
 use App\Exception\InvalidCoffeeOrderException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -24,6 +25,7 @@ class CoffeeOrderHandler
     private $messageBus;
     private $factory;
     private $logger;
+    private $coffeeOrderRepository;
 
     public function __construct(
         SerializerInterface $serializer,
@@ -32,6 +34,7 @@ class CoffeeOrderHandler
         MessageBusInterface $messageBus,
         CoffeeOrderFactory $factory,
         LoggerInterface $logger,
+        CoffeeOrderRepository $coffeeOrderRepository
     )
     {
         $this->serializer = $serializer;
@@ -40,9 +43,10 @@ class CoffeeOrderHandler
         $this->messageBus = $messageBus;
         $this->factory = $factory;
         $this->logger = $logger;
+        $this->coffeeOrderRepository = $coffeeOrderRepository;
     }
 
-    public function handle(Request $request): CoffeeOrder
+    public function handleCreateOrder(Request $request): CoffeeOrder
     {
         $dto = $this->deserializeRequest($request);
 
@@ -94,7 +98,40 @@ class CoffeeOrderHandler
                     'message' => $violation->getMessage()
                 ];
             }
+            $this->logger->info('Violations sur CoffeeOrderDTO', ['errors' => $errors]);
             throw new InvalidCoffeeOrderException($errors);
         }
+    }
+
+    public function handleAction(Request $request, string $action): string
+    {
+        $data= json_decode($request->getContent(), true);
+
+        if(!isset($data['orderId']) || !is_string($data['orderId'])) {
+            throw new InvalidCoffeeOrderException(['error' => 'orderId est manquant ou invalide.']);
+        }
+
+        $order = $this->coffeeOrderRepository->findOneBy(['orderID' => $data['orderId']]);
+
+        if (!$order) {
+            throw new InvalidCoffeeOrderException(['error' => 'Cette commande n\'existe pas.']);
+        }
+
+        switch ($action) {
+            case 'edit':
+                $order->setExecutedAt(new \DateTime());
+                break;
+        
+            case 'delete':
+                $this->entityManager->remove($order);
+                break;
+        
+            default:
+                throw new InvalidCoffeeOrderException(['error' => "Action '$action' non supportée."]);
+        }
+
+        $this->entityManager->flush();
+
+        return $order->getOrderID();
     }
 }

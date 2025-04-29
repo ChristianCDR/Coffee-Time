@@ -192,19 +192,18 @@ final class CoffeeController extends AbstractController
     public function prepareCoffee(Request $request): JsonResponse
     {
         try{
-            $order = $this->coffeeOrderHandler->handle($request);
+            $order = $this->coffeeOrderHandler->handleCreateOrder($request);
         }
         catch(InvalidCoffeeOrderException $e){
             return new JsonResponse(['errors' => $e->getErrors()], JsonResponse::HTTP_BAD_REQUEST);
         } catch (\Throwable $e) {
             $this->logger->error('Erreur lors de la commande : ' . $e->getMessage());
-    
             return new JsonResponse(['error' => 'Service temporairement indisponible.'], JsonResponse::HTTP_SERVICE_UNAVAILABLE);
         }
 
         return new JsonResponse([
             'status' => 'Commande reçue !',
-            'orderId' => $order->getOrderID()
+            'orderId' => $order->getOrderID() 
         ], JsonResponse::HTTP_CREATED);
     }
 
@@ -247,28 +246,15 @@ final class CoffeeController extends AbstractController
     )]
     public function edit(Request $request): JsonResponse
     {
-        $data= json_decode($request->getContent(), true);
-
-        if(!isset($data['orderId']) || !is_string($data['orderId'])) {
-            return new JsonResponse([
-                'error' => 'orderId est manquant ou invalide.',
-            ], JsonResponse::HTTP_BAD_REQUEST);
+        try {
+            $orderId = $this->coffeeOrderHandler->handleAction($request, 'edit');
         }
-
-        $order = $this->coffeeOrderRepository->findOneBy(['orderID' => $data['orderId']]);
-
-        if (!$order) {
-            return new JsonResponse([
-                'error' => 'Cette commande n\'existe pas.',
-            ], JsonResponse::HTTP_NOT_FOUND);
+        catch(InvalidCoffeeOrderException $e){
+            return new JsonResponse(['error' => $e->getErrors()], JsonResponse::HTTP_BAD_REQUEST);
         }
-
-        $order->setExecutedAt(new \DateTime());
-
-        $this->entityManager->flush();
 
         return new JsonResponse ([
-            'orderId' => $data['orderId']
+            'orderId' => $orderId
         ], JsonResponse::HTTP_OK);
     }
 
@@ -311,28 +297,15 @@ final class CoffeeController extends AbstractController
     )]
     public function delete(Request $request): JsonResponse
     {
-        $data= json_decode($request->getContent(), true);
-
-        if(!isset($data['orderId']) || !is_string($data['orderId'])) {
-            return new JsonResponse([
-                'error' => 'orderId est manquant ou invalide.',
-            ], JsonResponse::HTTP_BAD_REQUEST);
+        try {
+            $orderId = $this->coffeeOrderHandler->handleAction($request, 'delete');
         }
-
-        $order = $this->coffeeOrderRepository->findOneBy(['orderID' => $data['orderId']]);
-
-        if (!$order) {
-            return new JsonResponse([
-                'error' => 'Cette commande n\'existe pas.',
-            ], JsonResponse::HTTP_NOT_FOUND);
+        catch(InvalidCoffeeOrderException $e){
+            return new JsonResponse(['error' => $e->getErrors()], JsonResponse::HTTP_BAD_REQUEST);
         }
-
-        $this->entityManager->remove($order);
-
-        $this->entityManager->flush();
 
         return new JsonResponse ([
-            'orderId' => $data['orderId']
+            'orderId' => $orderId
         ], JsonResponse::HTTP_OK);
     }
 }

@@ -1,12 +1,6 @@
-services: 
+services:
   php:
-    env_file:
-      - ../back/.env.test
-
-  database:
-    env_file:
-      - ../back/.env.test
-    volumes:
-      - ./postgres_test_data:/var/lib/postgresql/data
-volumes:
-  postgres_test_data:
+    environment:
+      APP_ENV: test
+      DATABASE_URL: 'sqlite:///:memory:'
+    command: bash -c "php -d memory_limit=512M && php-fpm"

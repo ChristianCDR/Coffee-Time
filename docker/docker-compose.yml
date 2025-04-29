@@ -58,8 +58,8 @@ services:
     container_name: coffee-php
     restart: always
     depends_on:
-      - rabbitmq
-      - mercure-server
+      # - rabbitmq
+      # - mercure-server
       - database
     command: bash -c "php bin/console doctrine:migrations:migrate --no-interaction && php-fpm"
     env_file:

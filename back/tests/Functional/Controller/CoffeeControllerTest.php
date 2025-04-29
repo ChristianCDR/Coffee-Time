@@ -4,22 +4,32 @@ namespace App\Tests\Functional\Controller;
 
 use App\Entity\CoffeeOrder;
 use App\Repository\CoffeeOrderRepository;
+use App\Service\CoffeeOrderHandler;
+use App\DataFixtures\CoffeeOrderFixtures;
+use App\Exception\InvalidCoffeeOrderException;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 
 final class CoffeeControllerTest extends WebTestCase
 {
     private $client;
     private $mockRepository;
+    private $mockCoffeeOrderHandler;
+    protected $databaseTool;
 
     public function setUp(): void
     {
         $this->client = static::createClient();
         $this->mockRepository = $this->createMock(CoffeeOrderRepository::class);
-        static::getContainer()->set(CoffeeOrderRepository::class, $this->mockRepository);
+        $this->mockCoffeeOrderHandler = $this->createMock(CoffeeOrderHandler::class);
+        $this->databaseTool = self::getContainer()->get(DatabaseToolCollection::class)->get();
+        $this->databaseTool->loadFixtures([CoffeeOrderFixtures::class]);
     }
 
     public function testIndexReturnsOrdersSuccessfully(): void
     {
+        static::getContainer()->set(CoffeeOrderRepository::class, $this->mockRepository);
+
         $order = new CoffeeOrder();
 
         $order->setOrderID(1)
@@ -45,6 +55,8 @@ final class CoffeeControllerTest extends WebTestCase
 
     public function testIndexReturnsNoOrders(): void
     {
+        static::getContainer()->set(CoffeeOrderRepository::class, $this->mockRepository);
+
         $this->client->request('GET', '/api/order/history');
 
         $this->assertResponseStatusCodeSame(404);
@@ -81,16 +93,115 @@ final class CoffeeControllerTest extends WebTestCase
     public function testPrepareCoffeeInvalidJson(): void
     {
         $this->client->request(
-            'POST', 
-            '/api/order', 
-            server: ['CONTENT_TYPE' => 'application/json'], 
+            'POST',
+            '/api/order',
+            server: ['CONTENT_TYPE' => 'application/json'],
             content: 'invalid json'
         );
 
         $this->assertResponseStatusCodeSame(400);
-        $this->assertJson($client->getResponse()->getContent());
+        $this->assertJson($this->client->getResponse()->getContent());
 
-        $responseData = json_decode($client->getResponse()->getContent(), true);
-        $this->assertArrayHasKey('error', $responseData);
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertArrayHasKey('errors', $response);
     }
+
+    public function testPrepareCoffeeReturnsServiceUnavailable(): void
+    {
+        $this->mockCoffeeOrderHandler->method('handleCreateOrder')->willThrowException(new \Exception('AMQP down'));
+
+        static::getContainer()->set(CoffeeOrderHandler::class, $this->mockCoffeeOrderHandler);
+        
+        $this->client->request(
+            'POST',
+            '/api/order',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(
+                [
+                    'name' => 'espresso',
+                    'intensity' => 'strong',
+                    'size' => 'large'
+                ]
+            )
+        );
+
+        $this->assertResponseStatusCodeSame(503);
+
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertArrayHasKey('error', $response);
+    }
+
+    public function testEditCoffeeOrderSuccess(): void
+    {
+        $this->client->request(
+            'PUT',
+            '/api/order/edit',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['orderId' => 'U71c773e3-5206-49e6-8eda-fd29f0ebb79e'])
+        );
+
+        $this->assertResponseStatusCodeSame(200);
+ 
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertArrayHasKey('orderId', $response);
+    }
+
+    public function testEditCoffeeOrderThrowsException(): void
+    {
+        $this->mockCoffeeOrderHandler->method('handleAction')->willThrowException(new InvalidCoffeeOrderException(['error' => 'Commande introuvable.']));
+
+        static::getContainer()->set(CoffeeOrderHandler::class, $this->mockCoffeeOrderHandler);
+
+        $this->client->request(
+            'PUT',
+            '/api/order/edit',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['orderId' => '999'])
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+ 
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertArrayHasKey('error', $response);
+    }
+
+    public function testDeleteCoffeeOrderSuccess(): void
+    {
+        $this->client->request(
+            'DELETE',
+            '/api/order/delete',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['orderId' => 'U71c773e3-5206-49e6-8eda-fd29f0ebb79e'])
+        );
+
+        $this->assertResponseStatusCodeSame(200);
+ 
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertArrayHasKey('orderId', $response);
+    }
+
+    public function testDeleteCoffeeOrderThrowsException(): void
+    {
+        $this->mockCoffeeOrderHandler->method('handleAction')->willThrowException(new InvalidCoffeeOrderException(['error' => 'Commande introuvable.']));
+
+        static::getContainer()->set(CoffeeOrderHandler::class, $this->mockCoffeeOrderHandler);
+
+        $this->client->request(
+            'DELETE',
+            '/api/order/delete',
+            server: ['CONTENT_TYPE' => 'application/json'],
+            content: json_encode(['orderId' => '999'])
+        );
+
+        $this->assertResponseStatusCodeSame(400);
+ 
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertArrayHasKey('error', $response);
+    }
+
 }
