@@ -49,7 +49,7 @@ Avant de commencer, assure-toi d'avoir installé les outils suivants sur ta mach
 
         Une fois les étapes précédentes terminées, tu peux maintenant démarrer l'ensemble des services à l'aide de Docker Compose. Utilise cette commande dans le répertoire /docker :
 
-        docker compose --env-file ../back/.env up --build
+        docker compose -f docker-compose.yml --env-file ../back/.env up --build
 
     Cette commande va :
 

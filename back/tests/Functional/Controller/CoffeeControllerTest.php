@@ -3,7 +3,6 @@
 namespace App\Tests\Functional\Controller;
 
 use App\Entity\CoffeeOrder;
-use App\Repository\CoffeeOrderRepository;
 use App\Service\CoffeeOrderHandler;
 use App\DataFixtures\CoffeeOrderFixtures;
 use App\Exception\InvalidCoffeeOrderException;
@@ -13,35 +12,22 @@ use Liip\TestFixturesBundle\Services\DatabaseToolCollection;
 final class CoffeeControllerTest extends WebTestCase
 {
     private $client;
-    private $mockRepository;
     private $mockCoffeeOrderHandler;
     protected $databaseTool;
 
     public function setUp(): void
     {
         $this->client = static::createClient();
-        $this->mockRepository = $this->createMock(CoffeeOrderRepository::class);
         $this->mockCoffeeOrderHandler = $this->createMock(CoffeeOrderHandler::class);
         $this->databaseTool = self::getContainer()->get(DatabaseToolCollection::class)->get();
-        $this->databaseTool->loadFixtures([CoffeeOrderFixtures::class]);
+        $this->databaseTool->loadFixtures([
+            CoffeeOrderFixtures::class
+        ]);
+        
     }
 
     public function testIndexReturnsOrdersSuccessfully(): void
     {
-        static::getContainer()->set(CoffeeOrderRepository::class, $this->mockRepository);
-
-        $order = new CoffeeOrder();
-
-        $order->setOrderID(1)
-            ->setName('Test Order')
-            ->setIntensity('Medium')
-            ->setSize('Large')
-            ->setCreatedAt(new \DateTime())
-            ->setExecutedAt(new \DateTime())
-        ;
-
-        $this->mockRepository->method('findAll')->willReturn([$order]);
-
         $this->client->request('GET', '/api/order/history');
 
         $this->assertResponseIsSuccessful();
@@ -50,13 +36,13 @@ final class CoffeeControllerTest extends WebTestCase
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
         $this->assertCount(1, $response);
-        $this->assertEquals('Test Order', $response[0]['name']);
+        $this->assertEquals('espresso', $response[0]['name']);
     }
 
     public function testIndexReturnsNoOrders(): void
     {
-        static::getContainer()->set(CoffeeOrderRepository::class, $this->mockRepository);
-
+        $this->databaseTool->loadFixtures([]);
+        
         $this->client->request('GET', '/api/order/history');
 
         $this->assertResponseStatusCodeSame(404);

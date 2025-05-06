@@ -140,11 +140,24 @@ services:
     networks:
       - coffee-network
 
+  redis:
+    image: redis:alpine
+    container_name: coffee-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - coffee-network
+    
+
 volumes:
   rabbitmq:
   postgres_data:
   mercure_data:
   mercure_config:
+  redis_data:
 
 networks:
   coffee-network:

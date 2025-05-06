@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use App\Message\CoffeeMessage;
 use App\Service\CoffeeOrderHandler;
 use App\Factory\CoffeeOrderFactory;
+use App\Repository\CoffeeOrderRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -29,7 +30,7 @@ class CoffeeOrderHandlerTest extends TestCase
     private $factory;
     private $logger;
     private $violationList;
-    
+    private $coffeeOrderRepository;
     
     public function setUp(): void
     {
@@ -40,6 +41,7 @@ class CoffeeOrderHandlerTest extends TestCase
         $this->factory = $this->createMock(CoffeeOrderFactory::class);
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->violationList = $this->createMock(ConstraintViolationListInterface::class);
+        $this->coffeeOrderRepository = $this->createMock(CoffeeOrderRepository::class);
     }
 
     private function getCoffeeOrderHandler(): CoffeeOrderHandler
