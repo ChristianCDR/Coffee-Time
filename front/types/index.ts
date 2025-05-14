@@ -49,12 +49,21 @@ export interface Props {
     className: string;
 }
 
-export interface useToggleMenuReturn {
+export interface UseToggleMenuReturn {
     open: boolean;
     toggleMenu: () => void 
 }
 
-export interface useQueueStatusReturn { 
+export interface UseQueueStatusReturn { 
     queue: Queue;
     error: string | null;
+}
+
+export interface ProcessResponse {
+    status: string;
+}
+
+export interface UseManageProcess {
+    message: string | null;
+    manageProcess: (action: string) => Promise<void>
 }

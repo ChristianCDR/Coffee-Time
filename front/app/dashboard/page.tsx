@@ -1,42 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import CoffeeProgress from "@/components/dashboard/CoffeeProgress";
 import QueueStatus from "@/components/dashboard/QueueStatus";
 import History from "@/components/dashboard/History";
+import { useManageProcess } from "@/hooks/useManageProcess";
 import dynamic from 'next/dynamic';
 
 const NavbarNoSSR = dynamic(() => import("@/components/layout/Navbar"), { ssr: false })
 
 export default function Dashboard() {
-    const [message, setMessage] = useState("");
-
-    const manageProcess = async (action: string) => {
-        setMessage("Loading...");
-
-        try {
-            const response = await fetch(`http://localhost:8001/api/admin/${action}-process`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            });
-    
-            const data = await response.json();
-    
-            if (response.ok) {
-                setMessage(data.status);
-                // window.location.reload();
-            }
-            else {
-                setMessage(data.error || "Une erreur est survenue.");
-            }
-        }
-        catch (error) {
-            console.error("Request failed", error);
-            setMessage("Un problème est survenu lors de la requête.");
-        }
-    }
+    const { message, manageProcess } = useManageProcess();
 
     return (
         <div>

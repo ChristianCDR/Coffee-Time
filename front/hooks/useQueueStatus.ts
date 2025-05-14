@@ -1,9 +1,9 @@
 
 import { useEffect, useState } from 'react';
 import { useCoffeeProgress } from "@/hooks/useCoffeeProgress";
-import { Queue, useQueueStatusReturn } from "@/types/index";
+import { Queue, UseQueueStatusReturn } from "@/types/index";
 
-export function useQueueStatus (): useQueueStatusReturn {
+export function useQueueStatus (): UseQueueStatusReturn {
     const { data, error } = useCoffeeProgress<Queue>();
     const [queue, setQueue] = useState<Queue>({'node': '', 'messages': 0});
     

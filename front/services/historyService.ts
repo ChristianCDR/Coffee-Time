@@ -23,6 +23,6 @@ export async function deleteOrderService (orderId: string): Promise<OrderRespons
 }
 
 export async function fetchOrdersService (): Promise<Order[]> {
-    const response = await apiRequest<Order[]>({url: 'http://localhost:8001/api/order/history', method: 'GET'});
+    const response = await apiRequest<Order[]>({url: '/api/order/history', method: 'GET'});
     return response;
 }

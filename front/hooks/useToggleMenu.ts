@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useToggleMenuReturn } from "@/types/index";
+import { UseToggleMenuReturn } from "@/types/index";
 
-export function useToggleMenu(): useToggleMenuReturn {
+export function useToggleMenu(): UseToggleMenuReturn {
     const [open, setOpen] = useState(false);
 
     const toggleMenu = () => {
