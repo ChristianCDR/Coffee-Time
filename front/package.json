@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "autoprefixer": "^10.4.21",
+    "axios": "^1.9.0",
     "curl": "^0.1.4",
     "eventsource": "^3.0.6",
     "eventsource-polyfill": "^0.9.6",

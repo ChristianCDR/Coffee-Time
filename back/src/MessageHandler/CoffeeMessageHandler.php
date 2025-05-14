@@ -26,7 +26,7 @@ class CoffeeMessageHandler
     public function __invoke(CoffeeMessage $message)
     {
         // Simuler un travail long
-        foreach ([10, 30, 60, 100] as $progress) {
+        foreach ([10, 30, 50, 60, 80, 100] as $progress) {
             
             $queues = $this->rabbitMQService->getQueues();
 
