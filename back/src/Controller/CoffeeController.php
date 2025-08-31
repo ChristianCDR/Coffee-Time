@@ -3,27 +3,54 @@
 namespace App\Controller;
 
 use App\Entity\CoffeeOrder;
+use App\DTO\CoffeeOrderDTO;
+use App\Factory\CoffeeOrderFactory;
+use App\Service\CoffeeOrderHandler;
 use App\Repository\CoffeeOrderRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Exception\InvalidCoffeeOrderException;
 use App\Message\CoffeeMessage;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Nelmio\ApiDocBundle\Annotation\Security;
 use OpenApi\Attributes as OA;
+use Psr\Log\LoggerInterface;
+
 
 #[Route('/api')]
 final class CoffeeController extends AbstractController
 {
     private $entityManager;
+    private $coffeeOrderRepository;
+    private $serializer;
+    private $validator;
+    private $logger;
+    private $factory;
+    private $coffeeOrderHandler;
 
-    public function __construct(EntityManagerInterface $entityManager, CoffeeOrderRepository $coffeeOrderRepository)
+    public function __construct(
+        EntityManagerInterface $entityManager,
+        CoffeeOrderRepository $coffeeOrderRepository,
+        SerializerInterface $serializer,
+        ValidatorInterface $validator,
+        LoggerInterface $logger,
+        CoffeeOrderFactory $factory,
+        CoffeeOrderHandler $coffeeOrderHandler
+    )
     {
         $this->entityManager = $entityManager;
         $this->coffeeOrderRepository = $coffeeOrderRepository;
+        $this->serializer = $serializer;
+        $this->validator = $validator;
+        $this->logger = $logger;
+        $this->factory = $factory;
+        $this->coffeeOrderHandler = $coffeeOrderHandler;
     }
 
     #[Route('/order/history', name: 'app_order_history', methods: ['GET'])]
@@ -126,7 +153,7 @@ final class CoffeeController extends AbstractController
                     type: 'object',
                     properties: [
                         new OA\Property(property: 'status', type: 'string', example: "Commande reçue !"),
-                        new OA\Property(property: 'orderId', type: 'string', example: "Votre numéro de commande est 67f2e84ab634e")
+                        new OA\Property(property: 'orderId', type: 'string', example: "71c773e3-5206-49e6-8eda-fd29f0ebb79e")
                     ]
                 )
             ),
@@ -136,36 +163,47 @@ final class CoffeeController extends AbstractController
                 content: new OA\JsonContent(
                     type: 'object',
                     properties: [
-                        new OA\Property(property: 'error', type: 'string', example: 'Invalid request body')
+                        new OA\Property(
+                            property: 'errors',
+                            type: 'array',
+                            items: new OA\Items(
+                                type: 'object',
+                                properties: [
+                                    new OA\Property(property: 'property', type: 'string', example: 'name'),
+                                    new OA\Property(property: 'message', type: 'string', example: 'Le nom doit être parmi les choix autorisés.')
+                                ]
+                            )
+                        )
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 503,
+                description: 'Service Unavailable',
+                content: new OA\JsonContent(
+                    type: 'object',
+                    properties: [
+                        new OA\Property(property: 'error', type: 'string', example: 'Service temporairement indisponible.'),
                     ]
                 )
             )
         ]
     )]
-    public function prepareCoffee(MessageBusInterface $messageBus, Request $request): JsonResponse
+    public function prepareCoffee(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-
-        $orderId = uniqid();
-        $message = new CoffeeMessage($orderId);
-        $messageBus->dispatch($message);
-
-        $order = new CoffeeOrder();
-
-        $order
-            ->setOrderID($orderId)
-            ->setName($data['name'])
-            ->setIntensity($data['intensity'])
-            ->setSize($data['size'])
-            ->setCreatedAt(new \DateTime())
-        ;
-
-        $this->entityManager->persist($order);
-        $this->entityManager->flush();
+        try{
+            $order = $this->coffeeOrderHandler->handleCreateOrder($request);
+        }
+        catch(InvalidCoffeeOrderException $e){
+            return new JsonResponse(['errors' => $e->getErrors()], JsonResponse::HTTP_BAD_REQUEST);
+        } catch (\Throwable $e) {
+            $this->logger->error('Erreur lors de la commande : ' . $e->getMessage());
+            return new JsonResponse(['error' => 'Service temporairement indisponible.'], JsonResponse::HTTP_SERVICE_UNAVAILABLE);
+        }
 
         return new JsonResponse([
             'status' => 'Commande reçue !',
-            'orderId' => 'Votre numéro de commande est '.$orderId
+            'orderId' => $order->getOrderID() 
         ], JsonResponse::HTTP_CREATED);
     }
 
@@ -208,22 +246,15 @@ final class CoffeeController extends AbstractController
     )]
     public function edit(Request $request): JsonResponse
     {
-        $data= json_decode($request->getContent(), true);
-
-        $order = $this->coffeeOrderRepository->findOneBy(['orderID' => $data['orderId']]);
-
-        if (!$order) {
-            return new JsonResponse([
-                'error' => 'Cette commande n\'existe pas.',
-            ], JsonResponse::HTTP_NOT_FOUND);
+        try {
+            $orderId = $this->coffeeOrderHandler->handleAction($request, 'edit');
+        }
+        catch(InvalidCoffeeOrderException $e){
+            return new JsonResponse(['error' => $e->getErrors()], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        $order->setExecutedAt(new \DateTime());
-
-        $this->entityManager->flush();
-
         return new JsonResponse ([
-            'orderId' => $data['orderId']
+            'orderId' => $orderId
         ], JsonResponse::HTTP_OK);
     }
 
@@ -266,22 +297,15 @@ final class CoffeeController extends AbstractController
     )]
     public function delete(Request $request): JsonResponse
     {
-        $data= json_decode($request->getContent(), true);
-
-        $order = $this->coffeeOrderRepository->findOneBy(['orderID' => $data['orderId']]);
-
-        if (!$order) {
-            return new JsonResponse([
-                'error' => 'Cette commande n\'existe pas.',
-            ], JsonResponse::HTTP_NOT_FOUND);
+        try {
+            $orderId = $this->coffeeOrderHandler->handleAction($request, 'delete');
+        }
+        catch(InvalidCoffeeOrderException $e){
+            return new JsonResponse(['error' => $e->getErrors()], JsonResponse::HTTP_BAD_REQUEST);
         }
 
-        $this->entityManager->remove($order);
-
-        $this->entityManager->flush();
-
         return new JsonResponse ([
-            'orderId' => $data['orderId']
+            'orderId' => $orderId
         ], JsonResponse::HTTP_OK);
     }
 }

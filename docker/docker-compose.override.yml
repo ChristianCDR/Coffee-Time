@@ -1,0 +1,6 @@
+services:
+  php:
+    environment:
+      APP_ENV: test
+      DATABASE_URL: 'sqlite:///:memory:'
+    command: bash -c "php -d memory_limit=512M && php-fpm"

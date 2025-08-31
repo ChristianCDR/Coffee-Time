@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import dynamic from 'next/dynamic'
  
-const NavbarNoSSR = dynamic(() => import("@/components/navbar"), { ssr: false })
+const NavbarNoSSR = dynamic(() => import("@/components/layout/Navbar"), { ssr: false })
 
 export default function Order () {
     // States

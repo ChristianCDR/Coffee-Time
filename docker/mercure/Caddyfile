@@ -3,10 +3,11 @@ http://localhost {
     reverse_proxy * localhost:80
 
     mercure {
-        publish "http://localhost"
+        publish "http://localhost/queues"
+        subscribe "http://localhost/.well-known/mercure"
 
-        publisher_jwt {env.MERCURE_JWT_SECRET}
-        subscriber_jwt {env.MERCURE_JWT_SECRET}
+        publisher_jwt "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJtZXJjdXJlIjp7InB1Ymxpc2giOlsiaHR0cDovL2xvY2FsaG9zdC9xdWV1ZXMiXX19.T3JuItD1hm9rCzpMC3TJ51gEjV3Prp9S4Fz6i6IMFs8"
+        subscriber_jwt "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJtZXJjdXJlIjp7InN1YnNjcmliZSI6WyJodHRwOi8vbG9jYWxob3N0OjgwODEvLndlbGwta25vd24vbWVyY3VyZSJdfX0.DNmGNX_pGUN1Lb0HeAy99GwBULDt9ppUGyU1aGS8Vh0"
 
         subscriptions {
             # allow_jwt
